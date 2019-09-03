@@ -18,7 +18,7 @@ public class PaymentLocation {
 
     @Enumerated(EnumType.STRING)
     @Type(type = "pgsql_enum")
-    @Column(columnDefinition = "checker_payment")
+    @Column(columnDefinition = "checker_payment", nullable = false)
     private CheckerPayment checkerPayment;
 
 
