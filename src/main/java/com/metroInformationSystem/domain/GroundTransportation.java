@@ -33,4 +33,16 @@ public class GroundTransportation {
         this.transport = transport;
         this.route = route;
     }
+
+    public PaymentLocation getPaymentLocation() {
+        return paymentLocation;
+    }
+
+    public Transport getTransport() {
+        return transport;
+    }
+
+    public String getRoute() {
+        return route;
+    }
 }
