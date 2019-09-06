@@ -28,4 +28,8 @@ public class PaymentLocation {
     public PaymentLocation(CheckerPayment checkerPayment) {
         this.checkerPayment = checkerPayment;
     }
+
+    public CheckerPayment getCheckerPayment() {
+        return checkerPayment;
+    }
 }

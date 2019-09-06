@@ -5,13 +5,14 @@ import com.metroInformationSystem.Main;
 import com.metroInformationSystem.domain.GroundTransportation;
 import com.metroInformationSystem.domain.Passenger;
 import com.metroInformationSystem.domain.PaymentLocation;
+import com.metroInformationSystem.domain.Station;
 import com.metroInformationSystem.domain.enums.CheckerPayment;
 import com.metroInformationSystem.domain.enums.Transport;
 import com.metroInformationSystem.repository.GroundTransportationRepo;
 import com.metroInformationSystem.repository.PassengerRepo;
 import com.metroInformationSystem.repository.PaymentLocationRepo;
+import com.metroInformationSystem.repository.StationRepo;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -19,6 +20,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.junit4.SpringRunner;
+
+import java.util.Arrays;
+
+import static org.junit.Assert.assertEquals;
 
 
 @RunWith(SpringRunner.class)
@@ -31,33 +36,40 @@ public class DbCreationTest {
     private PaymentLocationRepo paymentLocationRepo;
     @Autowired
     private GroundTransportationRepo groundTransportationRepo;
+    @Autowired
+    private StationRepo stationRepo;
 
 
     @Before
     @Rollback(false)
-    public void setUpDB() throws Exception {
-        Passenger passenger1 = new Passenger("Тимофеев", "Павел", "Анатольевич");
-        Passenger passenger2 = new Passenger("Полищук", "Евгений", "Александрович");
+    public void setUpDB() {
+        Passenger pasha = new Passenger("Тимофеев", "Павел", "Анатольевич");
+        Passenger asdas = new Passenger("Полищук", "Евгений", "Александрович");
 
-        passengerRepo.save(passenger1);
-        passengerRepo.save(passenger2);
+        passengerRepo.save(pasha);
+        passengerRepo.save(asdas);
 
-        PaymentLocation paymentLocation1 = new PaymentLocation(CheckerPayment.TURNSTILE);
-        PaymentLocation paymentLocation2 = new PaymentLocation(CheckerPayment.VALIDATOR);
+        PaymentLocation turnstile1 = new PaymentLocation(CheckerPayment.TURNSTILE);
+        PaymentLocation validator1 = new PaymentLocation(CheckerPayment.VALIDATOR);
+        PaymentLocation validator2 = new PaymentLocation(CheckerPayment.VALIDATOR);
+        PaymentLocation turnstile2 = new PaymentLocation(CheckerPayment.TURNSTILE);
 
-        paymentLocationRepo.save(paymentLocation1);
-        paymentLocationRepo.save(paymentLocation2);
+        paymentLocationRepo.saveAll(Arrays.asList(validator1, validator2, turnstile1, turnstile2));
+
 
         // TODO: здесь наземному транспорту в качестве места оплаты передается турникет,
         // не забыть дописать запрещающий триггер
-        GroundTransportation groundTransportation1 =
-                new GroundTransportation(paymentLocation1, Transport.BUS, "30" );
-        GroundTransportation groundTransportation2 =
-                new GroundTransportation(paymentLocation2, Transport.TRAM, "64");
+        GroundTransportation bus = new GroundTransportation(turnstile1, Transport.BUS, "30" );
+        GroundTransportation tram = new GroundTransportation(validator1, Transport.TRAM, "64");
 
-        groundTransportationRepo.save(groundTransportation1);
+        groundTransportationRepo.save(bus);
+        groundTransportationRepo.save(tram);
 
-        groundTransportationRepo.save(groundTransportation2);
+        Station ladka = new Station(validator2, "Ладожская");
+        Station novochera = new Station(turnstile2, "Новочеркасская");
+
+        stationRepo.save(ladka);
+        stationRepo.save(novochera);
 
     }
 
@@ -67,8 +79,8 @@ public class DbCreationTest {
         Passenger passenger1 = passengerRepo.findByName("Павел");
         Passenger passenger2 = passengerRepo.findBySoname("Полищук");
 
-        Assert.assertEquals("Павел", passenger1.getName());
-        Assert.assertEquals("Евгений", passenger2.getName());
+        assertEquals("Павел", passenger1.getName());
+        assertEquals("Евгений", passenger2.getName());
     }
 
     @Test
@@ -76,14 +88,25 @@ public class DbCreationTest {
         GroundTransportation transportation1 = groundTransportationRepo.getByTransport(Transport.BUS);
         GroundTransportation transportation2 = groundTransportationRepo.getByTransport(Transport.TRAM);
 
-        Assert.assertEquals("30", transportation1.getRoute());
-        Assert.assertEquals("64", transportation2.getRoute());
+        assertEquals("30", transportation1.getRoute());
+        assertEquals("64", transportation2.getRoute());
+    }
+
+    @Test
+    public void testStation(){
+        Station ladka = stationRepo.findByName("Ладожская");
+        Station novochera = stationRepo.findByName("Новочеркасская");
+
+        assertEquals(CheckerPayment.VALIDATOR, ladka.getPaymentLocation().getCheckerPayment());
+        assertEquals(CheckerPayment.TURNSTILE, novochera.getPaymentLocation().getCheckerPayment());
+
     }
 
     @After
     public void clean(){
         passengerRepo.deleteAll();
         groundTransportationRepo.deleteAll();
+        stationRepo.deleteAll();
         paymentLocationRepo.deleteAll();
     }
 
