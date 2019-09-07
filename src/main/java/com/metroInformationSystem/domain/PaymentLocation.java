@@ -32,4 +32,12 @@ public class PaymentLocation {
     public CheckerPayment getCheckerPayment() {
         return checkerPayment;
     }
+
+    @Override
+    public String toString() {
+        return "PaymentLocation{" +
+                "id=" + id +
+                ", checkerPayment=" + checkerPayment +
+                '}';
+    }
 }
