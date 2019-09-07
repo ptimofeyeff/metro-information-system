@@ -14,8 +14,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
 
 import static org.junit.Assert.assertEquals;
 
@@ -41,44 +40,78 @@ public class DbCreationTest {
     @Before
     @Rollback(false)
     public void setUpDB() {
+        Iterable<PaymentLocation> locations = setUpPaymentLocation();
+        Iterable<Passenger> passengers = setUpPassengers();
+        Iterable<GroundTransportation> groundTransportation = setUpGroundTransportation(locations);
+        Iterable<Station> stations = setUpStation(locations);
+        Iterable<TravelCard> cards = setUpTravelCard();
+        Iterable<FixationOfPassage> fixations = setUpFixationOfPassage(cards, locations);
+    }
+
+    private Iterable<Passenger> setUpPassengers(){
         Passenger pasha = new Passenger("Тимофеев", "Павел", "Анатольевич");
         Passenger asdas = new Passenger("Полищук", "Евгений", "Александрович");
-        passengerRepo.save(pasha);
-        passengerRepo.save(asdas);
+
+        return passengerRepo.saveAll(Arrays.asList(pasha, asdas));
+    }
+
+    private Iterable<PaymentLocation> setUpPaymentLocation(){
 
         PaymentLocation turnstile1 = new PaymentLocation(CheckerPayment.TURNSTILE);
         PaymentLocation validator1 = new PaymentLocation(CheckerPayment.VALIDATOR);
         PaymentLocation validator2 = new PaymentLocation(CheckerPayment.VALIDATOR);
         PaymentLocation turnstile2 = new PaymentLocation(CheckerPayment.TURNSTILE);
-        paymentLocationRepo.saveAll(Arrays.asList(validator1, validator2, turnstile1, turnstile2));
 
+        return paymentLocationRepo.saveAll(Arrays.asList(validator1, validator2, turnstile1, turnstile2));
+    }
+
+    private Iterable<GroundTransportation> setUpGroundTransportation(Iterable<PaymentLocation> locations){
 
         // TODO: наземному транспорту подсовывается турникет для метро
-        GroundTransportation bus = new GroundTransportation(turnstile1, Transport.BUS, "30" );
-        GroundTransportation tram = new GroundTransportation(validator1, Transport.TRAM, "64");
-        groundTransportationRepo.save(bus);
-        groundTransportationRepo.save(tram);
+        GroundTransportation bus = new GroundTransportation(((List<PaymentLocation>) locations).get(2), Transport.BUS, "30" );
+        GroundTransportation tram = new GroundTransportation(((List<PaymentLocation>) locations).get(0), Transport.TRAM, "64");
 
-        // TODO: метро подсовывается валидатор для наземного транспорта
-        Station ladka = new Station(validator2, "Ладожская");
-        Station novochera = new Station(turnstile2, "Новочеркасская");
-        stationRepo.save(ladka);
-        stationRepo.save(novochera);
+        return groundTransportationRepo.saveAll(Arrays.asList(bus, tram));
+    }
+
+    private Iterable<Station> setUpStation(Iterable<PaymentLocation> locations){
+        Station ladka = new Station(((List<PaymentLocation>)locations).get(1), "Ладожская");
+        Station novochera = new Station(((List<PaymentLocation>) locations).get(3), "Новочеркасская");
+
+        return stationRepo.saveAll(Arrays.asList(ladka, novochera));
+    }
+
+    private Iterable<TravelCard> setUpTravelCard(){
 
         TravelCard card1 = new TravelCard();
         TravelCard card2 = new TravelCard();
-        travelCardRepo.saveAll(Arrays.asList(card1, card2));
 
-        FixationOfPassage firstFixCard1 =
-                new FixationOfPassage(card1, turnstile1, new java.sql.Date(new java.util.Date().getTime()));
-        FixationOfPassage firstFixCard2 =
-                new FixationOfPassage(card2, validator1, new java.sql.Date(new java.util.Date().getTime()));
-        FixationOfPassage secondFixCard1 =
-                new FixationOfPassage(card1, turnstile1, new java.sql.Date(new java.util.Date().getTime()));
-        FixationOfPassage secondFixCard2 =
-                new FixationOfPassage(card2, validator1, new java.sql.Date(new java.util.Date().getTime()));
+        return travelCardRepo.saveAll(Arrays.asList(card1, card2));
+    }
 
-        fixationOfPassageRepo.saveAll(Arrays.asList(firstFixCard1, firstFixCard2, secondFixCard1, secondFixCard2 ));
+    private Iterable<FixationOfPassage> setUpFixationOfPassage(Iterable<TravelCard> cards, Iterable<PaymentLocation> locations){
+
+        FixationOfPassage firstFixCard1 = new FixationOfPassage(
+                ((List<TravelCard>) cards).get(0),
+                ((List<PaymentLocation>) locations).get(2),
+                new java.sql.Date(new java.util.Date().getTime()));
+
+        FixationOfPassage firstFixCard2 = new FixationOfPassage(
+                ((List<TravelCard>) cards).get(1),
+                ((List<PaymentLocation>) locations).get(0),
+                new java.sql.Date(new java.util.Date().getTime()));
+
+        FixationOfPassage secondFixCard1 = new FixationOfPassage(
+                ((List<TravelCard>) cards).get(0),
+                ((List<PaymentLocation>) locations).get(2),
+                new java.sql.Date(new java.util.Date().getTime()));
+
+        FixationOfPassage secondFixCard2 = new FixationOfPassage(
+                ((List<TravelCard>) cards).get(1),
+                ((List<PaymentLocation>) locations).get(0),
+                new java.sql.Date(new java.util.Date().getTime()));
+
+        return fixationOfPassageRepo.saveAll(Arrays.asList(firstFixCard1, firstFixCard2, secondFixCard1, secondFixCard2));
     }
 
 
@@ -112,10 +145,10 @@ public class DbCreationTest {
 
     @Test
     public void testFixationOfPassage(){
-        ArrayList<TravelCard> cards = (ArrayList<TravelCard>) travelCardRepo.findAll();
+        List<TravelCard> cards = (List<TravelCard>) travelCardRepo.findAll();
 
-        ArrayList<FixationOfPassage> card1Fixations = (ArrayList<FixationOfPassage>) fixationOfPassageRepo.findByTravelCard(cards.get(0));
-        ArrayList<FixationOfPassage> card2Fixations = (ArrayList<FixationOfPassage>) fixationOfPassageRepo.findByTravelCard(cards.get(1));
+        List<FixationOfPassage> card1Fixations = (List<FixationOfPassage>) fixationOfPassageRepo.findByTravelCard(cards.get(0));
+        List<FixationOfPassage> card2Fixations = (List<FixationOfPassage>) fixationOfPassageRepo.findByTravelCard(cards.get(1));
 
         assertEquals(
                 card1Fixations.get(0).getPaymentLocation().getCheckerPayment(),
@@ -126,7 +159,6 @@ public class DbCreationTest {
                 card2Fixations.get(1).getPaymentLocation().getCheckerPayment()
         );
     }
-
 
     @After
     public void clean(){
