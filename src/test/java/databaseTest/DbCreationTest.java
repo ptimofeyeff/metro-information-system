@@ -39,6 +39,8 @@ public class DbCreationTest {
     private TravelCardRepo travelCardRepo;
     @Autowired
     private ReplenishmentTypeRepo replenishmentTypeRepo;
+    @Autowired
+    private ReplenishmentCardRepo replenishmentCardRepo;
 
 
     @Before
@@ -51,6 +53,9 @@ public class DbCreationTest {
         Iterable<TravelCard> cards = setUpTravelCard();
         Iterable<FixationOfPassage> fixations = setUpFixationOfPassage(cards, locations);
         Iterable<ReplenishmentType> replenishmentTypes = setUpReplenishmentType(stations);
+
+        Iterable<ReplenishmentCard> replenishmentCards =
+                setUpReplenishmentCard((List<TravelCard>) cards,(List <ReplenishmentType>) replenishmentTypes);
     }
 
     private Iterable<Passenger> setUpPassengers(){
@@ -128,6 +133,13 @@ public class DbCreationTest {
         return replenishmentTypeRepo.saveAll(Arrays.asList(type1, type2));
     }
 
+    private Iterable<ReplenishmentCard> setUpReplenishmentCard(List<TravelCard> cards, List<ReplenishmentType> types){
+        ReplenishmentCard firstRep = new ReplenishmentCard(cards.get(0), 1000L, types.get(0));
+        ReplenishmentCard secondRep = new ReplenishmentCard(cards.get(1), 1500L, types.get(1));
+        return replenishmentCardRepo.saveAll(Arrays.asList(firstRep, secondRep));
+    }
+
+
     @Test
     public void testPassengers() {
         Passenger passenger1 = passengerRepo.findByName("Павел");
@@ -184,12 +196,23 @@ public class DbCreationTest {
 
     }
 
+    @Test
+    public void testReplenishmentCard(){
+        ReplenishmentCard replenishment1 = replenishmentCardRepo.findByAmount(1000);
+        ReplenishmentCard replenishment2 = replenishmentCardRepo.findByAmount(1500);
+
+        assertEquals(ReplenishmentMethod.ONLINE, replenishment1.getType().getMethod());
+        assertEquals(ReplenishmentMethod.TERMINAL, replenishment2.getType().getMethod());
+    }
+
+
 
     @After
     public void clean(){
         passengerRepo.deleteAll();
         groundTransportationRepo.deleteAll();
         fixationOfPassageRepo.deleteAll();
+        replenishmentCardRepo.deleteAll();
         travelCardRepo.deleteAll();
         replenishmentTypeRepo.deleteAll();
         stationRepo.deleteAll();
