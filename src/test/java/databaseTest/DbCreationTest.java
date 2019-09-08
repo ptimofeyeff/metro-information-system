@@ -3,6 +3,7 @@ package databaseTest;
 import com.metroInformationSystem.Main;
 import com.metroInformationSystem.domain.*;
 import com.metroInformationSystem.domain.enums.CheckerPayment;
+import com.metroInformationSystem.domain.enums.ReplenishmentMethod;
 import com.metroInformationSystem.domain.enums.Transport;
 import com.metroInformationSystem.repository.*;
 import org.junit.After;
@@ -17,6 +18,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import java.util.*;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 
 @RunWith(SpringRunner.class)
@@ -35,6 +37,8 @@ public class DbCreationTest {
     private FixationOfPassageRepo fixationOfPassageRepo;
     @Autowired
     private TravelCardRepo travelCardRepo;
+    @Autowired
+    private ReplenishmentTypeRepo replenishmentTypeRepo;
 
 
     @Before
@@ -46,6 +50,7 @@ public class DbCreationTest {
         Iterable<Station> stations = setUpStation(locations);
         Iterable<TravelCard> cards = setUpTravelCard();
         Iterable<FixationOfPassage> fixations = setUpFixationOfPassage(cards, locations);
+        Iterable<ReplenishmentType> replenishmentTypes = setUpReplenishmentType(stations);
     }
 
     private Iterable<Passenger> setUpPassengers(){
@@ -67,7 +72,7 @@ public class DbCreationTest {
 
     private Iterable<GroundTransportation> setUpGroundTransportation(Iterable<PaymentLocation> locations){
 
-        // TODO: наземному транспорту подсовывается турникет для метро
+        // TODO: нужно ограничение не дающие записывать в качестве места оплаты турникет метро
         GroundTransportation bus = new GroundTransportation(((List<PaymentLocation>) locations).get(2), Transport.BUS, "30" );
         GroundTransportation tram = new GroundTransportation(((List<PaymentLocation>) locations).get(0), Transport.TRAM, "64");
 
@@ -75,6 +80,8 @@ public class DbCreationTest {
     }
 
     private Iterable<Station> setUpStation(Iterable<PaymentLocation> locations){
+
+        // TODO: нужно ограничение не дающие записывать в качестве места оплаты валидатор наземного транспорта
         Station ladka = new Station(((List<PaymentLocation>)locations).get(1), "Ладожская");
         Station novochera = new Station(((List<PaymentLocation>) locations).get(3), "Новочеркасская");
 
@@ -114,6 +121,12 @@ public class DbCreationTest {
         return fixationOfPassageRepo.saveAll(Arrays.asList(firstFixCard1, firstFixCard2, secondFixCard1, secondFixCard2));
     }
 
+    private Iterable<ReplenishmentType> setUpReplenishmentType(Iterable<Station> stations){
+        //TODO: нужно ограничение не дающие записывать станцию при онлайн методе
+        ReplenishmentType type1 = new ReplenishmentType(ReplenishmentMethod.ONLINE);
+        ReplenishmentType type2 = new ReplenishmentType(((List<Station>) stations).get(1), ReplenishmentMethod.TERMINAL);
+        return replenishmentTypeRepo.saveAll(Arrays.asList(type1, type2));
+    }
 
     @Test
     public void testPassengers() {
@@ -160,15 +173,27 @@ public class DbCreationTest {
         );
     }
 
+    @Test
+    public void testReplenishmentType(){
+
+        ReplenishmentType replenishmentOnline = replenishmentTypeRepo.findByMethod(ReplenishmentMethod.ONLINE);
+        ReplenishmentType replenishmentTerminal = replenishmentTypeRepo.findByMethod(ReplenishmentMethod.TERMINAL);
+
+        assertNull(replenishmentOnline.getStation());
+        assertEquals("Новочеркасская", replenishmentTerminal.getStation().getName());
+
+    }
+
+
     @After
     public void clean(){
         passengerRepo.deleteAll();
         groundTransportationRepo.deleteAll();
-        stationRepo.deleteAll();
         fixationOfPassageRepo.deleteAll();
         travelCardRepo.deleteAll();
+        replenishmentTypeRepo.deleteAll();
+        stationRepo.deleteAll();
         paymentLocationRepo.deleteAll();
     }
-
 }
 
