@@ -22,10 +22,10 @@ public class FixationOfPassage {
     @Column(nullable = false)
     private Date date;
 
-    public FixationOfPassage(TravelCard travelCard, PaymentLocation paymentLocation, Date date) {
+    public FixationOfPassage(TravelCard travelCard, PaymentLocation paymentLocation) {
         this.travelCard = travelCard;
         this.paymentLocation = paymentLocation;
-        this.date = date;
+        this.date = new Date(new java.util.Date().getTime());
     }
 
     public FixationOfPassage() {

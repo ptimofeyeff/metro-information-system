@@ -48,11 +48,11 @@ public class DbCreationTest {
     public void setUpDB() {
         Iterable<PaymentLocation> locations = setUpPaymentLocation();
         Iterable<Passenger> passengers = setUpPassengers();
-        Iterable<GroundTransportation> groundTransportation = setUpGroundTransportation(locations);
-        Iterable<Station> stations = setUpStation(locations);
+        Iterable<GroundTransportation> groundTransportation = setUpGroundTransportation((List<PaymentLocation>) locations);
+        Iterable<Station> stations = setUpStation((List<PaymentLocation>) locations);
         Iterable<TravelCard> cards = setUpTravelCard();
-        Iterable<FixationOfPassage> fixations = setUpFixationOfPassage(cards, locations);
-        Iterable<ReplenishmentType> replenishmentTypes = setUpReplenishmentType(stations);
+        Iterable<FixationOfPassage> fixations = setUpFixationOfPassage((List<TravelCard>) cards, (List<PaymentLocation>) locations);
+        Iterable<ReplenishmentType> replenishmentTypes = setUpReplenishmentType((List<Station>) stations);
 
         Iterable<ReplenishmentCard> replenishmentCards =
                 setUpReplenishmentCard((List<TravelCard>) cards,(List <ReplenishmentType>) replenishmentTypes);
@@ -75,20 +75,20 @@ public class DbCreationTest {
         return paymentLocationRepo.saveAll(Arrays.asList(validator1, validator2, turnstile1, turnstile2));
     }
 
-    private Iterable<GroundTransportation> setUpGroundTransportation(Iterable<PaymentLocation> locations){
+    private Iterable<GroundTransportation> setUpGroundTransportation(List<PaymentLocation> locations){
 
         // TODO: нужно ограничение не дающие записывать в качестве места оплаты турникет метро
-        GroundTransportation bus = new GroundTransportation(((List<PaymentLocation>) locations).get(2), Transport.BUS, "30" );
-        GroundTransportation tram = new GroundTransportation(((List<PaymentLocation>) locations).get(0), Transport.TRAM, "64");
+        GroundTransportation bus = new GroundTransportation(locations.get(2), Transport.BUS, "30" );
+        GroundTransportation tram = new GroundTransportation(locations.get(0), Transport.TRAM, "64");
 
         return groundTransportationRepo.saveAll(Arrays.asList(bus, tram));
     }
 
-    private Iterable<Station> setUpStation(Iterable<PaymentLocation> locations){
+    private Iterable<Station> setUpStation(List<PaymentLocation> locations){
 
         // TODO: нужно ограничение не дающие записывать в качестве места оплаты валидатор наземного транспорта
-        Station ladka = new Station(((List<PaymentLocation>)locations).get(1), "Ладожская");
-        Station novochera = new Station(((List<PaymentLocation>) locations).get(3), "Новочеркасская");
+        Station ladka = new Station(locations.get(1), "Ладожская");
+        Station novochera = new Station(locations.get(3), "Новочеркасская");
 
         return stationRepo.saveAll(Arrays.asList(ladka, novochera));
     }
@@ -101,35 +101,20 @@ public class DbCreationTest {
         return travelCardRepo.saveAll(Arrays.asList(card1, card2));
     }
 
-    private Iterable<FixationOfPassage> setUpFixationOfPassage(Iterable<TravelCard> cards, Iterable<PaymentLocation> locations){
+    private Iterable<FixationOfPassage> setUpFixationOfPassage(List<TravelCard> cards, List<PaymentLocation> locations){
 
-        FixationOfPassage firstFixCard1 = new FixationOfPassage(
-                ((List<TravelCard>) cards).get(0),
-                ((List<PaymentLocation>) locations).get(2),
-                new java.sql.Date(new java.util.Date().getTime()));
-
-        FixationOfPassage firstFixCard2 = new FixationOfPassage(
-                ((List<TravelCard>) cards).get(1),
-                ((List<PaymentLocation>) locations).get(0),
-                new java.sql.Date(new java.util.Date().getTime()));
-
-        FixationOfPassage secondFixCard1 = new FixationOfPassage(
-                ((List<TravelCard>) cards).get(0),
-                ((List<PaymentLocation>) locations).get(2),
-                new java.sql.Date(new java.util.Date().getTime()));
-
-        FixationOfPassage secondFixCard2 = new FixationOfPassage(
-                ((List<TravelCard>) cards).get(1),
-                ((List<PaymentLocation>) locations).get(0),
-                new java.sql.Date(new java.util.Date().getTime()));
+        FixationOfPassage firstFixCard1 = new FixationOfPassage(cards.get(0), locations.get(2));
+        FixationOfPassage firstFixCard2 = new FixationOfPassage(cards.get(1), locations.get(0));
+        FixationOfPassage secondFixCard1 = new FixationOfPassage(cards.get(0), locations.get(2));
+        FixationOfPassage secondFixCard2 = new FixationOfPassage(cards.get(1), locations.get(0));
 
         return fixationOfPassageRepo.saveAll(Arrays.asList(firstFixCard1, firstFixCard2, secondFixCard1, secondFixCard2));
     }
 
-    private Iterable<ReplenishmentType> setUpReplenishmentType(Iterable<Station> stations){
+    private Iterable<ReplenishmentType> setUpReplenishmentType(List<Station> stations){
         //TODO: нужно ограничение не дающие записывать станцию при онлайн методе
         ReplenishmentType type1 = new ReplenishmentType(ReplenishmentMethod.ONLINE);
-        ReplenishmentType type2 = new ReplenishmentType(((List<Station>) stations).get(1), ReplenishmentMethod.TERMINAL);
+        ReplenishmentType type2 = new ReplenishmentType(stations.get(1), ReplenishmentMethod.TERMINAL);
         return replenishmentTypeRepo.saveAll(Arrays.asList(type1, type2));
     }
 
