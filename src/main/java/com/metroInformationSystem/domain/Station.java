@@ -1,6 +1,7 @@
 package com.metroInformationSystem.domain;
 
 import javax.persistence.*;
+import java.util.Objects;
 
 @Entity
 public class Station {
@@ -31,5 +32,20 @@ public class Station {
 
     public String getName() {
         return name;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Station)) return false;
+        Station station = (Station) o;
+        return id == station.id &&
+                paymentLocation.equals(station.paymentLocation) &&
+                name.equals(station.name);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, paymentLocation, name);
     }
 }

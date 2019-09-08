@@ -4,6 +4,7 @@ import com.metroInformationSystem.domain.enums.Transport;
 import org.hibernate.annotations.Type;
 
 import javax.persistence.*;
+import java.util.Objects;
 
 @Entity
 public class GroundTransportation {
@@ -44,5 +45,21 @@ public class GroundTransportation {
 
     public String getRoute() {
         return route;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof GroundTransportation)) return false;
+        GroundTransportation that = (GroundTransportation) o;
+        return id == that.id &&
+                paymentLocation.equals(that.paymentLocation) &&
+                transport == that.transport &&
+                route.equals(that.route);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, paymentLocation, transport, route);
     }
 }

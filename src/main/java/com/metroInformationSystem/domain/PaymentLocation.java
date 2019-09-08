@@ -6,6 +6,7 @@ import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 
 import javax.persistence.*;
+import java.util.Objects;
 
 @Entity
 @TypeDef(name = "pgsql_enum",
@@ -39,5 +40,19 @@ public class PaymentLocation {
                 "id=" + id +
                 ", checkerPayment=" + checkerPayment +
                 '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof PaymentLocation)) return false;
+        PaymentLocation that = (PaymentLocation) o;
+        return id == that.id &&
+                checkerPayment == that.checkerPayment;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, checkerPayment);
     }
 }

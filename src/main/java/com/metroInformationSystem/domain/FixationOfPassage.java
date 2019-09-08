@@ -2,6 +2,7 @@ package com.metroInformationSystem.domain;
 
 import javax.persistence.*;
 import java.sql.Date;
+import java.util.Objects;
 
 @Entity
 public class FixationOfPassage {
@@ -54,5 +55,21 @@ public class FixationOfPassage {
                 ", paymentLocation=" + paymentLocation +
                 ", date=" + date +
                 '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof FixationOfPassage)) return false;
+        FixationOfPassage that = (FixationOfPassage) o;
+        return id == that.id &&
+                travelCard.equals(that.travelCard) &&
+                paymentLocation.equals(that.paymentLocation) &&
+                date.equals(that.date);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, travelCard, paymentLocation, date);
     }
 }

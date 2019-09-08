@@ -2,6 +2,7 @@ package com.metroInformationSystem.domain;
 
 import javax.persistence.*;
 import java.sql.Date;
+import java.util.Objects;
 
 @Entity
 public class ReplenishmentCard {
@@ -64,5 +65,22 @@ public class ReplenishmentCard {
                 ", date=" + date +
                 ", type=" + type +
                 '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof ReplenishmentCard)) return false;
+        ReplenishmentCard that = (ReplenishmentCard) o;
+        return id == that.id &&
+                amount == that.amount &&
+                card.equals(that.card) &&
+                date.equals(that.date) &&
+                type.equals(that.type);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, card, amount, date, type);
     }
 }

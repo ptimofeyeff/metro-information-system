@@ -135,7 +135,7 @@ public class DbCreationTest {
 
     private Iterable<ReplenishmentCard> setUpReplenishmentCard(List<TravelCard> cards, List<ReplenishmentType> types){
         ReplenishmentCard firstRep = new ReplenishmentCard(cards.get(0), 1000L, types.get(0));
-        ReplenishmentCard secondRep = new ReplenishmentCard(cards.get(1), 1500L, types.get(1));
+        ReplenishmentCard secondRep = new ReplenishmentCard(cards.get(0), 1500L, types.get(1));
         return replenishmentCardRepo.saveAll(Arrays.asList(firstRep, secondRep));
     }
 
@@ -203,6 +203,7 @@ public class DbCreationTest {
 
         assertEquals(ReplenishmentMethod.ONLINE, replenishment1.getType().getMethod());
         assertEquals(ReplenishmentMethod.TERMINAL, replenishment2.getType().getMethod());
+        assertEquals(replenishment1.getCard(), replenishment2.getCard());
     }
 
 

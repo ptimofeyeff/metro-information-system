@@ -4,6 +4,7 @@ import com.metroInformationSystem.domain.enums.ReplenishmentMethod;
 import org.hibernate.annotations.Type;
 
 import javax.persistence.*;
+import java.util.Objects;
 
 @Entity
 @Table(name = "replenishment_tp")
@@ -53,5 +54,20 @@ public class ReplenishmentType {
                 ", station=" + station +
                 ", method=" + method +
                 '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof ReplenishmentType)) return false;
+        ReplenishmentType that = (ReplenishmentType) o;
+        return id.equals(that.id) &&
+                Objects.equals(station, that.station) &&
+                method == that.method;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, station, method);
     }
 }
