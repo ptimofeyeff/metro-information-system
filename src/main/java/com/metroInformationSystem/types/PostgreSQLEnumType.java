@@ -1,4 +1,4 @@
-package com.metroInformationSystem.utils;
+package com.metroInformationSystem.types;
 
 import org.hibernate.HibernateException;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;

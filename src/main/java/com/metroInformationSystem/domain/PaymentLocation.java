@@ -1,7 +1,7 @@
 package com.metroInformationSystem.domain;
 
 import com.metroInformationSystem.domain.enums.CheckerPayment;
-import com.metroInformationSystem.utils.PostgreSQLEnumType;
+import com.metroInformationSystem.types.PostgreSQLEnumType;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 

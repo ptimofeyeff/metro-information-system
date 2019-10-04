@@ -10,11 +10,13 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.postgresql.util.PGInterval;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import java.sql.Time;
 import java.util.*;
 
 import static org.junit.Assert.assertEquals;
@@ -41,7 +43,8 @@ public class DbCreationTest {
     private ReplenishmentTypeRepo replenishmentTypeRepo;
     @Autowired
     private ReplenishmentCardRepo replenishmentCardRepo;
-
+    @Autowired
+    private TariffRepo tariffRepo;
 
     @Before
     @Rollback(false)
@@ -53,9 +56,9 @@ public class DbCreationTest {
         Iterable<TravelCard> cards = setUpTravelCard();
         Iterable<FixationOfPassage> fixations = setUpFixationOfPassage((List<TravelCard>) cards, (List<PaymentLocation>) locations);
         Iterable<ReplenishmentType> replenishmentTypes = setUpReplenishmentType((List<Station>) stations);
-
         Iterable<ReplenishmentCard> replenishmentCards =
                 setUpReplenishmentCard((List<TravelCard>) cards,(List <ReplenishmentType>) replenishmentTypes);
+        Iterable<Tariff> tariffs = setUpTariff();
     }
 
     private Iterable<Passenger> setUpPassengers(){
@@ -124,6 +127,16 @@ public class DbCreationTest {
         return replenishmentCardRepo.saveAll(Arrays.asList(firstRep, secondRep));
     }
 
+    private Iterable<Tariff> setUpTariff(){
+        Tariff tariff1 = new Tariff("Единый студенческий проездной на месяц",
+                1035, new PGInterval(0,1,0,0,0,0), 100, Integer.MAX_VALUE,
+                Integer.MAX_VALUE, Integer.MAX_VALUE, new Time(0));
+
+        Tariff tariff2 = new Tariff("ПБ Автобус",
+                1555, new PGInterval(0,1,0,0,0,0), 0, Integer.MAX_VALUE, 0, 0, new Time(0));
+
+         return tariffRepo.saveAll(Arrays.asList(tariff1, tariff2));
+    }
 
     @Test
     public void testPassengers() {
@@ -191,6 +204,14 @@ public class DbCreationTest {
         assertEquals(replenishment1.getCard(), replenishment2.getCard());
     }
 
+    public void testTariff(){
+        Tariff tariff1 = tariffRepo.findByName("Единый студенческий проездной на месяц");
+        Tariff tariff2 = tariffRepo.findByName("ПБ Автобус");
+
+        assertEquals( 1035, tariff1.getCost());
+        assertEquals(1, tariff2.getValidity().getMonths());
+    }
+
 
 
     @After
@@ -203,6 +224,7 @@ public class DbCreationTest {
         replenishmentTypeRepo.deleteAll();
         stationRepo.deleteAll();
         paymentLocationRepo.deleteAll();
+        tariffRepo.deleteAll();
     }
 }
 
