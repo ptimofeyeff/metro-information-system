@@ -17,7 +17,9 @@ import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.sql.Time;
-import java.util.*;
+import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
@@ -47,6 +49,8 @@ public class DbCreationTest {
     private TariffRepo tariffRepo;
     @Autowired
     private ExemptRepo exemptRepo;
+    @Autowired
+    private PassengerCardRepo passengerCardRepo;
 
 
     @Before
@@ -60,19 +64,21 @@ public class DbCreationTest {
         Iterable<FixationOfPassage> fixations = setUpFixationOfPassage((List<TravelCard>) cards, (List<PaymentLocation>) locations);
         Iterable<ReplenishmentType> replenishmentTypes = setUpReplenishmentType((List<Station>) stations);
         Iterable<ReplenishmentCard> replenishmentCards =
-                setUpReplenishmentCard((List<TravelCard>) cards,(List <ReplenishmentType>) replenishmentTypes);
+                setUpReplenishmentCard((List<TravelCard>) cards, (List<ReplenishmentType>) replenishmentTypes);
         Iterable<Tariff> tariffs = setUpTariff();
         Iterable<Exempt> exempts = setUpExempt((List<Passenger>) passengers);
+        Iterable<PassengerCard> passengerCards = setUpPassengerCard((List<Passenger>) passengers,
+                (List<TravelCard>) cards, (List<Tariff>) tariffs);
     }
 
-    private Iterable<Passenger> setUpPassengers(){
+    private Iterable<Passenger> setUpPassengers() {
         Passenger pasha = new Passenger("Тимофеев", "Павел", "Анатольевич");
         Passenger asdas = new Passenger("Полищук", "Евгений", "Александрович");
 
         return passengerRepo.saveAll(Arrays.asList(pasha, asdas));
     }
 
-    private Iterable<PaymentLocation> setUpPaymentLocation(){
+    private Iterable<PaymentLocation> setUpPaymentLocation() {
 
         PaymentLocation turnstile1 = new PaymentLocation(CheckerPayment.TURNSTILE);
         PaymentLocation validator1 = new PaymentLocation(CheckerPayment.VALIDATOR);
@@ -82,16 +88,16 @@ public class DbCreationTest {
         return paymentLocationRepo.saveAll(Arrays.asList(validator1, validator2, turnstile1, turnstile2));
     }
 
-    private Iterable<GroundTransportation> setUpGroundTransportation(List<PaymentLocation> locations){
+    private Iterable<GroundTransportation> setUpGroundTransportation(List<PaymentLocation> locations) {
 
         // TODO: нужно ограничение не дающие записывать в качестве места оплаты турникет метро
-        GroundTransportation bus = new GroundTransportation(locations.get(2), Transport.BUS, "30" );
+        GroundTransportation bus = new GroundTransportation(locations.get(2), Transport.BUS, "30");
         GroundTransportation tram = new GroundTransportation(locations.get(0), Transport.TRAM, "64");
 
         return groundTransportationRepo.saveAll(Arrays.asList(bus, tram));
     }
 
-    private Iterable<Station> setUpStation(List<PaymentLocation> locations){
+    private Iterable<Station> setUpStation(List<PaymentLocation> locations) {
 
         // TODO: нужно ограничение не дающие записывать в качестве места оплаты валидатор наземного транспорта
         Station ladka = new Station(locations.get(1), "Ладожская");
@@ -100,7 +106,7 @@ public class DbCreationTest {
         return stationRepo.saveAll(Arrays.asList(ladka, novochera));
     }
 
-    private Iterable<TravelCard> setUpTravelCard(){
+    private Iterable<TravelCard> setUpTravelCard() {
 
         TravelCard card1 = new TravelCard();
         TravelCard card2 = new TravelCard();
@@ -108,7 +114,7 @@ public class DbCreationTest {
         return travelCardRepo.saveAll(Arrays.asList(card1, card2));
     }
 
-    private Iterable<FixationOfPassage> setUpFixationOfPassage(List<TravelCard> cards, List<PaymentLocation> locations){
+    private Iterable<FixationOfPassage> setUpFixationOfPassage(List<TravelCard> cards, List<PaymentLocation> locations) {
 
         FixationOfPassage firstFixCard1 = new FixationOfPassage(cards.get(0), locations.get(2));
         FixationOfPassage firstFixCard2 = new FixationOfPassage(cards.get(1), locations.get(0));
@@ -118,35 +124,67 @@ public class DbCreationTest {
         return fixationOfPassageRepo.saveAll(Arrays.asList(firstFixCard1, firstFixCard2, secondFixCard1, secondFixCard2));
     }
 
-    private Iterable<ReplenishmentType> setUpReplenishmentType(List<Station> stations){
+    private Iterable<ReplenishmentType> setUpReplenishmentType(List<Station> stations) {
         //TODO: нужно ограничение не дающие записывать станцию при онлайн методе
         ReplenishmentType type1 = new ReplenishmentType(ReplenishmentMethod.ONLINE);
         ReplenishmentType type2 = new ReplenishmentType(stations.get(1), ReplenishmentMethod.TERMINAL);
         return replenishmentTypeRepo.saveAll(Arrays.asList(type1, type2));
     }
 
-    private Iterable<ReplenishmentCard> setUpReplenishmentCard(List<TravelCard> cards, List<ReplenishmentType> types){
+    private Iterable<ReplenishmentCard> setUpReplenishmentCard(List<TravelCard> cards, List<ReplenishmentType> types) {
         ReplenishmentCard firstRep = new ReplenishmentCard(cards.get(0), 1000L, types.get(0));
         ReplenishmentCard secondRep = new ReplenishmentCard(cards.get(0), 1500L, types.get(1));
         return replenishmentCardRepo.saveAll(Arrays.asList(firstRep, secondRep));
     }
 
-    private Iterable<Tariff> setUpTariff(){
+    private Iterable<Tariff> setUpTariff() {
         Tariff tariff1 = new Tariff("Единый студенческий проездной на месяц",
-                1035, new PGInterval(0,1,0,0,0,0), 100, Integer.MAX_VALUE,
+                1035, new PGInterval(0, 1, 0, 0, 0, 0), 100, Integer.MAX_VALUE,
                 Integer.MAX_VALUE, Integer.MAX_VALUE, new Time(0));
 
         Tariff tariff2 = new Tariff("ПБ Автобус",
-                1555, new PGInterval(0,1,0,0,0,0), 0, Integer.MAX_VALUE, 0, 0, new Time(0));
+                1555, new PGInterval(0, 1, 0, 0, 0, 0), 0, Integer.MAX_VALUE, 0, 0, new Time(0));
 
-         return tariffRepo.saveAll(Arrays.asList(tariff1, tariff2));
+        return tariffRepo.saveAll(Arrays.asList(tariff1, tariff2));
     }
 
-    private Iterable<Exempt> setUpExempt(List<Passenger> passengers){
+    private Iterable<Exempt> setUpExempt(List<Passenger> passengers) {
         Exempt exempt1 = new Exempt(passengers.get(0), "Пенсионер");
         Exempt exempt2 = new Exempt(passengers.get(1), "Студент очной формы обучения");
 
         return exemptRepo.saveAll(Arrays.asList(exempt1, exempt2));
+    }
+
+    private Iterable<PassengerCard> setUpPassengerCard(List<Passenger> passengers,
+                                                       List<TravelCard> cards,
+                                                       List<Tariff> tariffs) {
+
+        LocalDateTime recharge = LocalDateTime.now();
+        LocalDateTime expiration = recharge.plusMonths(1);
+        Tariff tariff1 = tariffs.get(0);
+        Tariff tariff2 = tariffs.get(1);
+
+
+        PassengerCard passengerCard1 = new PassengerCard(passengers.get(0), cards.get(0),
+                tariff1, recharge, expiration);
+
+        PassengerCard passengerCard2 = new PassengerCard(passengers.get(0), cards.get(1),
+                tariff2, recharge, expiration);
+
+        return passengerCardRepo.saveAll(Arrays.asList(passengerCard1, passengerCard2));
+    }
+
+    @Test
+    public void testPassengersCard() {
+        Passenger passenger = passengerRepo.findByName("Павел");
+        TravelCard travelCard1 = travelCardRepo.findById(3L).get();
+        TravelCard travelCard2 = travelCardRepo.findById(4L).get();
+
+        PassengerCard passengerCard1 = passengerCardRepo.findByPassengerAndTravelCard(passenger, travelCard1);
+        PassengerCard passengerCard2 = passengerCardRepo.findByPassengerAndTravelCard(passenger, travelCard2);
+
+        assertEquals(passengerCard1.getTariff().getCost(), 1035);
+        assertEquals(passengerCard2.getTariff().getCost(), 1555);
     }
 
     @Test
@@ -159,7 +197,7 @@ public class DbCreationTest {
     }
 
     @Test
-    public void testGroundTransportationTest(){
+    public void testGroundTransportationTest() {
         GroundTransportation transportation1 = groundTransportationRepo.getByTransport(Transport.BUS);
         GroundTransportation transportation2 = groundTransportationRepo.getByTransport(Transport.TRAM);
 
@@ -168,7 +206,7 @@ public class DbCreationTest {
     }
 
     @Test
-    public void testStation(){
+    public void testStation() {
         Station ladka = stationRepo.findByName("Ладожская");
         Station novochera = stationRepo.findByName("Новочеркасская");
 
@@ -178,7 +216,7 @@ public class DbCreationTest {
     }
 
     @Test
-    public void testFixationOfPassage(){
+    public void testFixationOfPassage() {
         List<TravelCard> cards = (List<TravelCard>) travelCardRepo.findAll();
 
         List<FixationOfPassage> card1Fixations = (List<FixationOfPassage>) fixationOfPassageRepo.findByTravelCard(cards.get(0));
@@ -195,7 +233,7 @@ public class DbCreationTest {
     }
 
     @Test
-    public void testReplenishmentType(){
+    public void testReplenishmentType() {
 
         ReplenishmentType replenishmentOnline = replenishmentTypeRepo.findByMethod(ReplenishmentMethod.ONLINE);
         ReplenishmentType replenishmentTerminal = replenishmentTypeRepo.findByMethod(ReplenishmentMethod.TERMINAL);
@@ -206,7 +244,7 @@ public class DbCreationTest {
     }
 
     @Test
-    public void testReplenishmentCard(){
+    public void testReplenishmentCard() {
         ReplenishmentCard replenishment1 = replenishmentCardRepo.findByAmount(1000);
         ReplenishmentCard replenishment2 = replenishmentCardRepo.findByAmount(1500);
 
@@ -216,26 +254,27 @@ public class DbCreationTest {
     }
 
     @Test
-    public void testTariff(){
+    public void testTariff() {
         Tariff tariff1 = tariffRepo.findByName("Единый студенческий проездной на месяц");
         Tariff tariff2 = tariffRepo.findByName("ПБ Автобус");
 
-        assertEquals( 1035, tariff1.getCost());
+        assertEquals(1035, tariff1.getCost());
         assertEquals(1, tariff2.getValidity().getMonths());
     }
 
     @Test
-    public void testExempt(){
+    public void testExempt() {
         Exempt exempt1 = exemptRepo.findByKind("Пенсионер");
         Exempt exempt2 = exemptRepo.findByKind("Студент очной формы обучения");
 
-       assertEquals("Павел" ,exempt1.getPassenger().getName());
-       assertEquals("Полищук" ,exempt2.getPassenger().getSoname());
+        assertEquals("Павел", exempt1.getPassenger().getName());
+        assertEquals("Полищук", exempt2.getPassenger().getSoname());
     }
 
 
     @After
-    public void clean(){
+    public void clean() {
+        passengerCardRepo.deleteAll();
         exemptRepo.deleteAll();
         passengerRepo.deleteAll();
         groundTransportationRepo.deleteAll();
@@ -246,6 +285,7 @@ public class DbCreationTest {
         stationRepo.deleteAll();
         paymentLocationRepo.deleteAll();
         tariffRepo.deleteAll();
+
     }
 }
 
