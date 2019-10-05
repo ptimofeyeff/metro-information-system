@@ -45,6 +45,9 @@ public class DbCreationTest {
     private ReplenishmentCardRepo replenishmentCardRepo;
     @Autowired
     private TariffRepo tariffRepo;
+    @Autowired
+    private ExemptRepo exemptRepo;
+
 
     @Before
     @Rollback(false)
@@ -59,6 +62,7 @@ public class DbCreationTest {
         Iterable<ReplenishmentCard> replenishmentCards =
                 setUpReplenishmentCard((List<TravelCard>) cards,(List <ReplenishmentType>) replenishmentTypes);
         Iterable<Tariff> tariffs = setUpTariff();
+        Iterable<Exempt> exempts = setUpExempt((List<Passenger>) passengers);
     }
 
     private Iterable<Passenger> setUpPassengers(){
@@ -138,6 +142,13 @@ public class DbCreationTest {
          return tariffRepo.saveAll(Arrays.asList(tariff1, tariff2));
     }
 
+    private Iterable<Exempt> setUpExempt(List<Passenger> passengers){
+        Exempt exempt1 = new Exempt(passengers.get(0), "Пенсионер");
+        Exempt exempt2 = new Exempt(passengers.get(1), "Студент очной формы обучения");
+
+        return exemptRepo.saveAll(Arrays.asList(exempt1, exempt2));
+    }
+
     @Test
     public void testPassengers() {
         Passenger passenger1 = passengerRepo.findByName("Павел");
@@ -204,6 +215,7 @@ public class DbCreationTest {
         assertEquals(replenishment1.getCard(), replenishment2.getCard());
     }
 
+    @Test
     public void testTariff(){
         Tariff tariff1 = tariffRepo.findByName("Единый студенческий проездной на месяц");
         Tariff tariff2 = tariffRepo.findByName("ПБ Автобус");
@@ -212,10 +224,19 @@ public class DbCreationTest {
         assertEquals(1, tariff2.getValidity().getMonths());
     }
 
+    @Test
+    public void testExempt(){
+        Exempt exempt1 = exemptRepo.findByKind("Пенсионер");
+        Exempt exempt2 = exemptRepo.findByKind("Студент очной формы обучения");
+
+       assertEquals("Павел" ,exempt1.getPassenger().getName());
+       assertEquals("Полищук" ,exempt2.getPassenger().getSoname());
+    }
 
 
     @After
     public void clean(){
+        exemptRepo.deleteAll();
         passengerRepo.deleteAll();
         groundTransportationRepo.deleteAll();
         fixationOfPassageRepo.deleteAll();
