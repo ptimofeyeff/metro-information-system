@@ -19,6 +19,8 @@ import org.springframework.test.context.junit4.SpringRunner;
 import java.sql.Time;
 import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
@@ -51,6 +53,8 @@ public class DbCreationTest {
     private ExemptRepo exemptRepo;
     @Autowired
     private PassengerCardRepo passengerCardRepo;
+    @Autowired
+    private ExemptionRepo exemptionRepo;
 
 
     @Before
@@ -66,16 +70,17 @@ public class DbCreationTest {
         Iterable<ReplenishmentCard> replenishmentCards =
                 setUpReplenishmentCard((List<TravelCard>) cards, (List<ReplenishmentType>) replenishmentTypes);
         Iterable<Tariff> tariffs = setUpTariff();
-        Iterable<Exempt> exempts = setUpExempt((List<Passenger>) passengers);
         Iterable<PassengerCard> passengerCards = setUpPassengerCard((List<Passenger>) passengers,
                 (List<TravelCard>) cards, (List<Tariff>) tariffs);
+        setUpExemptAndExemption((List<Passenger>) passengers);
     }
 
     private Iterable<Passenger> setUpPassengers() {
         Passenger pasha = new Passenger("Тимофеев", "Павел", "Анатольевич");
         Passenger asdas = new Passenger("Полищук", "Евгений", "Александрович");
+        Passenger vanek = new Passenger("Иванов", "Иван", "Иваныч");
 
-        return passengerRepo.saveAll(Arrays.asList(pasha, asdas));
+        return passengerRepo.saveAll(Arrays.asList(pasha, asdas, vanek));
     }
 
     private Iterable<PaymentLocation> setUpPaymentLocation() {
@@ -148,11 +153,31 @@ public class DbCreationTest {
         return tariffRepo.saveAll(Arrays.asList(tariff1, tariff2));
     }
 
-    private Iterable<Exempt> setUpExempt(List<Passenger> passengers) {
-        Exempt exempt1 = new Exempt(passengers.get(0), "Пенсионер");
-        Exempt exempt2 = new Exempt(passengers.get(1), "Студент очной формы обучения");
+    private void setUpExemptAndExemption(List<Passenger> passengers) {
+        Exempt exempt1 = new Exempt(passengers.get(0),
+                null, LocalDateTime.now(), LocalDateTime.now().plusYears(255));
 
-        return exemptRepo.saveAll(Arrays.asList(exempt1, exempt2));
+        Exempt exempt2 = new Exempt(passengers.get(1),
+                null, LocalDateTime.now(), LocalDateTime.now().plusYears(4));
+
+        Exempt exempt3 = new Exempt(passengers.get(2),
+                null, LocalDateTime.now(), LocalDateTime.now().plusYears(4));
+
+
+        Exemption retiree = new Exemption("Пенсионер", Arrays.asList(exempt1, exempt3), true);
+        Exemption veteran = new Exemption("Ветеран ВОВ", Collections.singletonList(exempt1), true);
+
+
+        Exemption student = new Exemption("Студент очной формы обучения", Collections.singletonList(exempt2), false);
+
+        exempt1.setExemptions(Arrays.asList(retiree, veteran));
+        exempt2.setExemptions(Collections.singletonList(student));
+        exempt3.setExemptions(Collections.singletonList(retiree));
+
+        exemptionRepo.saveAll(Arrays.asList(retiree, veteran, student));
+        exemptRepo.saveAll(Arrays.asList(exempt1, exempt2, exempt3));
+
+
     }
 
     private Iterable<PassengerCard> setUpPassengerCard(List<Passenger> passengers,
@@ -177,8 +202,8 @@ public class DbCreationTest {
     @Test
     public void testPassengersCard() {
         Passenger passenger = passengerRepo.findByName("Павел");
-        TravelCard travelCard1 = travelCardRepo.findById(3L).get();
-        TravelCard travelCard2 = travelCardRepo.findById(4L).get();
+        TravelCard travelCard1 = travelCardRepo.findById(5L).get();
+        TravelCard travelCard2 = travelCardRepo.findById(6L).get();
 
         PassengerCard passengerCard1 = passengerCardRepo.findByPassengerAndTravelCard(passenger, travelCard1);
         PassengerCard passengerCard2 = passengerCardRepo.findByPassengerAndTravelCard(passenger, travelCard2);
@@ -263,12 +288,19 @@ public class DbCreationTest {
     }
 
     @Test
-    public void testExempt() {
-        Exempt exempt1 = exemptRepo.findByKind("Пенсионер");
-        Exempt exempt2 = exemptRepo.findByKind("Студент очной формы обучения");
+    public void testExemptAndExemption() {
+        Passenger passenger = passengerRepo.findByName("Павел");
 
-        assertEquals("Павел", exempt1.getPassenger().getName());
-        assertEquals("Полищук", exempt2.getPassenger().getSoname());
+        Exempt exempt = exemptRepo.findByPassenger(passenger);
+        Exemption exemption = exemptionRepo.findByName("Студент очной формы обучения");
+
+        Collection<Exempt> exempts = exemption.getExempts();
+        for (Exempt exempt1 : exempts) {
+            Passenger passenger1 = exempt1.getPassenger();
+            assertEquals("Евгений", passenger1.getName());
+        }
+        Collection<Exemption> exemptions = exempt.getExemptions();
+        assertEquals(2, exemptions.size());
     }
 
 
@@ -276,6 +308,7 @@ public class DbCreationTest {
     public void clean() {
         passengerCardRepo.deleteAll();
         exemptRepo.deleteAll();
+        exemptionRepo.deleteAll();
         passengerRepo.deleteAll();
         groundTransportationRepo.deleteAll();
         fixationOfPassageRepo.deleteAll();
